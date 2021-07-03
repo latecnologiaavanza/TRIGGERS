@@ -1,0 +1,69 @@
+Problema
+Administrar los datos de dos tablas llamadas: "libros" y "ventas". Cada vez que se produzca la venta 
+de libros reducir el campo stock de la tabla "libros" mediante un trigger definido en la tabla ventas.
+
+Borramos las tablas "libros" y "ventas" si existen:
+
+drop table if exists ventas;
+drop table if exists libros;
+Creamos las dos tablas con las siguientes estructuras:
+
+ create table libros(
+  codigo int auto_increment,
+  titulo varchar(50),
+  autor varchar(50),
+  editorial varchar(30),
+  precio float, 
+  stock int,
+  primary key (codigo)
+ );
+
+ create table ventas(
+  numero int auto_increment,
+  codigolibro int,
+  precio float,
+  cantidad int,
+  primary key (numero)
+ );
+Insertamos algunas filas de prueba en la tabla "libros":
+
+ insert into libros(titulo, autor, editorial, precio, stock)
+  values('Uno','Richard Bach','Planeta',15,100);   
+ insert into libros(titulo, autor, editorial, precio, stock)
+  values('Ilusiones','Richard Bach','Planeta',18,50);
+ insert into libros(titulo, autor, editorial, precio, stock)
+  values('El aleph','Borges','Emece',25,200);
+ insert into libros(titulo, autor, editorial, precio, stock)
+  values('Aprenda PHP','Mario Molina','Emece',45,200);
+Si existe el trigger 'before_ventas_insert' procedemos a eliminarlo:
+
+ drop trigger if exists before_ventas_insert;  
+Creamos el disparador 'before_ventas_insert' con la siguiente lógica:
+
+ delimiter //
+ create trigger before_ventas_insert
+   before insert
+   on ventas
+   for each row
+ begin
+   update libros set stock=libros.stock-new.cantidad
+     where new.codigolibro=libros.codigo; 
+ end //
+ delimiter ;
+El disparador 'before_ventas_insert' se asocia a la tabla 'ventas' y se dispara cada vez que 
+ejecutamos el comando SQL insert:
+
+ create trigger before_ventas_insert
+   before insert
+   on ventas
+La lógica que implementamos dentro del trigger consiste en reducir el stock actual del libro que se 
+vende:
+
+   update libros set stock=libros.stock-new.cantidad
+     where new.codigolibro=libros.codigo; 
+Procedemos a insertar una fila en la tabla 'ventas':
+
+ insert into ventas(codigolibro, precio, cantidad)
+  values(1, 15, 1); 
+Luego si controlamos la cantidad de libros en stock veremos que se ha reducido en 1:
+
